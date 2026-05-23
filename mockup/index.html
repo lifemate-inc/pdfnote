@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart PDF — モックアップ（Phase 0）</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
+    }
+    .thumbnail-page {
+      aspect-ratio: 3/4;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      position: relative;
+      overflow: hidden;
+      container-type: inline-size;
+    }
+    /* container queryで、サムネイルの幅に応じて内部フォントサイズを変える */
+    .thumb-content { padding: 4cqi; font-size: 3.5cqi; line-height: 1.2; color: #374151; }
+    .thumb-title { font-size: 5cqi; font-weight: bold; text-align: center; margin-bottom: 3cqi; color: #111827; }
+    .thumb-field { margin-bottom: 1.5cqi; font-size: 3.5cqi; }
+    .thumb-divider { border-top: 1px solid #d1d5db; margin: 2cqi 0; }
+    .thumb-row { font-size: 3cqi; margin-bottom: 0.5cqi; display: flex; justify-content: space-between; }
+    .thumbnail-rotated {
+      transform: rotate(90deg) scale(0.8);
+    }
+    .stamp-demo {
+      position: absolute;
+      padding: 4px 8px;
+      background: rgba(220, 38, 38, 0.1);
+      border: 2px solid #dc2626;
+      color: #dc2626;
+      font-weight: bold;
+      font-size: 14px;
+      border-radius: 4px;
+      cursor: move;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- ====================================== -->
+  <!--  ヘッダー（全画面共通）                 -->
+  <!-- ====================================== -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <div class="px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">📄</span>
+        <h1 class="text-xl font-bold text-gray-900">Smart PDF</h1>
+        <span class="text-sm text-gray-500 hidden sm:inline">— 軽量PDF編集ツール</span>
+        <span class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">Phase 0 モックアップ</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="showTour()" class="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-1">
+          ❓ ヘルプ
+        </button>
+        <button onclick="showScreen('home')" class="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">
+          🏠 ホーム
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ====================================== -->
+  <!--  画面切替ナビ（モックアップ用）         -->
+  <!-- ====================================== -->
+  <div class="bg-blue-50 border-b border-blue-200 px-6 py-2 text-sm flex items-center gap-2 flex-wrap">
+    <span class="text-blue-700 font-medium">📍 画面切替（モックアップ用）:</span>
+    <button onclick="showScreen('home')" class="px-3 py-1 bg-white border border-blue-300 rounded text-blue-700 hover:bg-blue-100">ホーム</button>
+    <button onclick="showScreen('list')" class="px-3 py-1 bg-white border border-blue-300 rounded text-blue-700 hover:bg-blue-100">一覧</button>
+    <button onclick="showScreen('preview')" class="px-3 py-1 bg-white border border-blue-300 rounded text-blue-700 hover:bg-blue-100">プレビュー</button>
+    <button onclick="showScreen('split')" class="px-3 py-1 bg-white border border-blue-300 rounded text-blue-700 hover:bg-blue-100">軽量化モード</button>
+    <button onclick="openExtractModal()" class="px-3 py-1 bg-white border border-blue-300 rounded text-blue-700 hover:bg-blue-100">抽出ダイアログ</button>
+    <button onclick="openBugReportModal()" class="px-3 py-1 bg-white border border-blue-300 rounded text-blue-700 hover:bg-blue-100">不具合報告</button>
+    <button onclick="showHeavyWarning()" class="px-3 py-1 bg-white border border-blue-300 rounded text-blue-700 hover:bg-blue-100">重いPDF警告</button>
+  </div>
+
+  <!-- ====================================== -->
+  <!--  ホーム画面                             -->
+  <!-- ====================================== -->
+  <div id="screen-home" class="screen p-8">
+    <div class="max-w-3xl mx-auto">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-900 mb-3">PDFを開く</h2>
+        <p class="text-gray-600 text-base">編集したい PDF をドラッグ&ドロップするか、ボタンから選んでください</p>
+      </div>
+
+      <!-- ドロップエリア（メイン動線・大きく目立たせる） -->
+      <div onclick="showScreen('list')" class="bg-white border-4 border-dashed border-blue-300 rounded-2xl p-20 text-center hover:border-blue-500 hover:bg-blue-50 transition cursor-pointer mb-6">
+        <div class="text-7xl mb-4">📥</div>
+        <div class="text-2xl font-medium text-gray-900 mb-2">PDFをここにドラッグ&ドロップ</div>
+        <div class="text-base text-gray-500 mb-6">または</div>
+        <button onclick="event.stopPropagation(); showScreen('list')" class="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-medium rounded-lg shadow-sm">
+          📁 PDFファイルを選ぶ
+        </button>
+      </div>
+
+      <!-- セキュリティ説明 -->
+      <div class="bg-green-50 border border-green-300 rounded-xl p-5 mb-4">
+        <div class="flex items-start gap-3">
+          <div class="text-2xl">🔒</div>
+          <div>
+            <h3 class="text-base font-bold text-green-900 mb-1">PDFはお使いのパソコンから出ません</h3>
+            <p class="text-sm text-green-800">Smart PDFはすべての処理をブラウザ内で行います。読み込んだPDFや個人情報は<strong>絶対にインターネット送信されません</strong>。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 事前分割への控えめなリンク（普段は使わない機能） -->
+      <div class="text-center mt-6">
+        <button onclick="showScreen('split')" class="text-sm text-gray-500 hover:text-gray-700 hover:underline">
+          重いPDF（100ページ超）でお困りの場合は こちら
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================== -->
+  <!--  一覧画面                               -->
+  <!-- ====================================== -->
+  <div id="screen-list" class="screen hidden">
+    <div class="flex h-[calc(100vh-115px)]">
+
+      <!-- 左サイドバー -->
+      <aside class="w-64 bg-white border-r border-gray-200 p-4 overflow-y-auto">
+        <div class="mb-4">
+          <div class="text-xs text-gray-500 mb-1">編集中のファイル</div>
+          <div class="text-sm font-medium text-gray-900 break-all">2026年5月_利用票一覧.pdf</div>
+          <div class="text-xs text-gray-500 mt-1">120ページ / 82MB</div>
+        </div>
+
+        <hr class="my-4 border-gray-200">
+
+        <div class="space-y-2">
+          <button onclick="openExtractModal()" class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2">
+            ✂️ 選択ページを抽出
+          </button>
+          <button class="w-full px-4 py-3 bg-white hover:bg-gray-50 text-gray-900 text-sm font-medium rounded-lg border border-gray-300 flex items-center justify-center gap-2">
+            🔄 選択を一括回転
+          </button>
+          <button class="w-full px-4 py-3 bg-white hover:bg-gray-50 text-gray-900 text-sm font-medium rounded-lg border border-gray-300 flex items-center justify-center gap-2">
+            💾 全体を保存
+          </button>
+        </div>
+
+        <hr class="my-4 border-gray-200">
+
+        <div class="mb-3">
+          <div class="text-xs text-gray-500 mb-2 flex items-center justify-between">
+            <span>サムネイルの大きさ</span>
+            <span id="size-label" class="text-blue-600 font-medium">大</span>
+          </div>
+          <input type="range" min="1" max="6" value="4" class="w-full" id="size-slider" oninput="updateThumbSize(this.value)">
+          <div class="flex justify-between text-xs text-gray-500 mt-1">
+            <span>極小</span><span>小</span><span>中</span><span>大</span><span>特大</span><span>巨大</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">💡 大きくすると書類の内容が読みやすくなります</p>
+        </div>
+
+        <hr class="my-4 border-gray-200">
+
+        <div class="mb-3">
+          <div class="text-xs font-medium text-gray-700 mb-2">処理済みファイル</div>
+          <div class="space-y-1">
+            <div class="text-xs text-gray-600 px-2 py-1 bg-gray-50 rounded flex items-center gap-1">
+              <span>📄</span>
+              <span class="truncate">山田太郎様_2026年5月.pdf</span>
+            </div>
+            <div class="text-xs text-gray-600 px-2 py-1 bg-gray-50 rounded flex items-center gap-1">
+              <span>📄</span>
+              <span class="truncate">佐藤花子様_2026年5月.pdf</span>
+            </div>
+            <div class="text-xs text-gray-600 px-2 py-1 bg-gray-50 rounded flex items-center gap-1">
+              <span>📄</span>
+              <span class="truncate">鈴木一郎様_2026年5月.pdf</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- メインエリア -->
+      <main class="flex-1 overflow-y-auto p-6">
+        <div class="mb-4 flex items-center justify-between">
+          <div class="text-sm text-gray-700">
+            <span class="font-bold" id="selected-count">3</span> ページ選択中（全 120 ページ）
+          </div>
+          <div class="text-sm text-gray-500">
+            ヒント: Shift+クリックで範囲選択、Ctrl+クリックで複数選択
+          </div>
+        </div>
+
+        <!-- サムネイルグリッド（初期は「大」サイズ） -->
+        <div id="thumbnail-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3">
+          <!-- JS で生成 -->
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ====================================== -->
+  <!--  プレビュー画面                         -->
+  <!-- ====================================== -->
+  <div id="screen-preview" class="screen hidden">
+    <div class="flex h-[calc(100vh-115px)]">
+
+      <!-- 左サイドバー（小サムネ一覧） -->
+      <aside class="w-48 bg-white border-r border-gray-200 p-3 overflow-y-auto">
+        <button onclick="showScreen('list')" class="w-full mb-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-2">
+          ↩ 一覧に戻る
+        </button>
+        <div id="mini-thumbnail-list" class="space-y-2">
+          <!-- JS で生成 -->
+        </div>
+      </aside>
+
+      <!-- メインエリア -->
+      <main class="flex-1 overflow-y-auto p-6 bg-gray-100">
+
+        <!-- ファイル名 + 鉛筆アイコン -->
+        <div class="bg-white rounded-lg p-4 mb-4 flex items-center gap-3 max-w-3xl mx-auto">
+          <span class="text-2xl">📄</span>
+          <div class="flex-1" id="filename-area">
+            <div id="filename-display" class="text-lg font-medium text-gray-900 flex items-center gap-2">
+              <span id="filename-text">山田太郎様_2026年5月.pdf</span>
+              <button onclick="startRename()" class="text-blue-600 hover:bg-blue-50 p-1 rounded" title="ファイル名を変更">
+                ✏️
+              </button>
+            </div>
+            <div id="filename-edit" class="hidden flex items-center gap-2">
+              <input id="filename-input" type="text" value="山田太郎様_2026年5月.pdf" class="flex-1 px-3 py-2 text-base border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <button onclick="saveRename()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded">✓ 確定</button>
+              <button onclick="cancelRename()" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded">✕ キャンセル</button>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">3 ページ / 1.2 MB</div>
+          </div>
+        </div>
+
+        <!-- ツールバー -->
+        <div class="bg-white rounded-lg p-3 mb-4 flex items-center gap-2 max-w-3xl mx-auto flex-wrap">
+          <button class="px-4 py-2 bg-white hover:bg-gray-50 text-gray-900 text-sm font-medium rounded border border-gray-300 flex items-center gap-2">
+            🔄 右に90°回転
+          </button>
+          <button onclick="addStamp()" class="px-4 py-2 bg-white hover:bg-gray-50 text-gray-900 text-sm font-medium rounded border border-gray-300 flex items-center gap-2">
+            🏷 スタンプを追加
+          </button>
+          <div class="border-l border-gray-300 h-6 mx-2"></div>
+          <div class="text-sm text-gray-600">ページ:</div>
+          <button class="px-3 py-2 bg-white hover:bg-gray-50 text-gray-900 text-sm rounded border border-gray-300">◀</button>
+          <span class="text-sm font-medium px-2"><span id="current-page">1</span> / 3</span>
+          <button class="px-3 py-2 bg-white hover:bg-gray-50 text-gray-900 text-sm rounded border border-gray-300">▶</button>
+          <div class="flex-1"></div>
+          <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded flex items-center gap-2">
+            💾 保存
+          </button>
+        </div>
+
+        <!-- PDFビューア（ダミー） -->
+        <div class="max-w-3xl mx-auto">
+          <div id="pdf-page-display" class="bg-white shadow-lg rounded-lg aspect-[3/4] relative" style="position: relative;">
+            <!-- ダミーPDFコンテンツ -->
+            <div class="absolute inset-0 p-12">
+              <div class="text-center text-lg font-bold mb-6">介護サービス利用票（兼サービス提供票）</div>
+              <div class="text-base mb-3">利用者氏名: 山田太郎 様</div>
+              <div class="text-base mb-3">サービス提供月: 2026年5月</div>
+              <div class="text-base mb-6">事業所名: ○○訪問介護ステーション</div>
+              <div class="border-t border-gray-300 my-4"></div>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between"><span>5/1（月）9:00-10:00 訪問介護</span><span>1回</span></div>
+                <div class="flex justify-between"><span>5/3（水）9:00-10:00 訪問介護</span><span>1回</span></div>
+                <div class="flex justify-between"><span>5/5（金）9:00-10:00 訪問介護</span><span>1回</span></div>
+                <div class="flex justify-between"><span>5/8（月）9:00-10:00 訪問介護</span><span>1回</span></div>
+                <div class="flex justify-between"><span>5/10（水）9:00-10:00 訪問介護</span><span>1回</span></div>
+              </div>
+              <div class="mt-12 text-right text-sm text-gray-500">- 1 -</div>
+            </div>
+            <!-- スタンプサンプル -->
+            <div class="stamp-demo" style="top: 20px; right: 20px;" title="ドラッグで移動、クリックで削除">確認済</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ====================================== -->
+  <!--  軽量化（事前分割）モード               -->
+  <!-- ====================================== -->
+  <div id="screen-split" class="screen hidden p-8">
+    <div class="max-w-3xl mx-auto">
+      <button onclick="showScreen('home')" class="mb-4 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-2">
+        ↩ ホームに戻る
+      </button>
+
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">✂️ 事前分割（軽量化モード）</h2>
+      <p class="text-gray-600 mb-6">100ページ超の重いPDFを、まず指定したページ数ごとに分割します。分割後の軽くなったファイルで通常作業を続けることができます。</p>
+
+      <div class="bg-white rounded-xl p-6 border border-gray-200 mb-6">
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">編集する PDF</label>
+          <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400">
+            <div class="text-4xl mb-2">📥</div>
+            <div class="text-sm text-gray-600">PDFをここにドラッグ&ドロップ または クリックして選ぶ</div>
+          </div>
+          <div class="mt-3 text-sm bg-gray-50 rounded p-3 flex items-center gap-2">
+            <span>📄</span>
+            <span class="font-medium">2026年5月_利用票一覧.pdf</span>
+            <span class="text-gray-500">120ページ / 82MB</span>
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">何ページごとに分割しますか？</label>
+          <div class="flex items-center gap-3">
+            <input type="number" value="50" class="w-32 px-4 py-3 text-lg border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
+            <span class="text-base text-gray-700">ページごと</span>
+          </div>
+          <p class="text-sm text-gray-500 mt-2">💡 一般的なノートPC（メモリ8GB）では 50 ページ程度が目安です</p>
+        </div>
+
+        <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="text-sm text-blue-900 font-medium mb-2">📋 分割後のファイル名（自動）</div>
+          <ul class="text-sm text-blue-800 space-y-1 ml-4">
+            <li>• 2026年5月_利用票一覧_part1.pdf（1-50ページ）</li>
+            <li>• 2026年5月_利用票一覧_part2.pdf（51-100ページ）</li>
+            <li>• 2026年5月_利用票一覧_part3.pdf（101-120ページ）</li>
+          </ul>
+        </div>
+
+        <button onclick="showSplitProgress()" class="w-full px-6 py-4 bg-orange-600 hover:bg-orange-700 text-white text-base font-medium rounded-lg shadow-sm flex items-center justify-center gap-2">
+          ✂️ 分割を実行する
+        </button>
+      </div>
+
+      <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-4 text-sm text-yellow-900">
+        💡 <strong>使い方のヒント:</strong> 分割した後、それぞれの軽くなったファイルを開いて通常の作業（人ごとの抽出など）を行ってください。
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================== -->
+  <!--  抽出ダイアログ（PDF プレビュー付き）   -->
+  <!-- ====================================== -->
+  <div id="modal-extract" class="modal hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
+
+      <!-- ヘッダー -->
+      <div class="flex items-center justify-between p-5 border-b border-gray-200">
+        <h3 class="text-xl font-bold text-gray-900">✂️ 選択ページを抽出して保存</h3>
+        <button onclick="closeExtractModal()" class="text-gray-400 hover:text-gray-600 text-2xl">✕</button>
+      </div>
+
+      <!-- 本体: 左にPDFプレビュー / 右にファイル名等 -->
+      <div class="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-0 overflow-hidden">
+
+        <!-- 左: PDFプレビュー（書類を見ながらリネームできる） -->
+        <div class="lg:col-span-3 bg-gray-100 p-4 overflow-y-auto border-r border-gray-200">
+          <div class="text-xs text-gray-600 mb-3 flex items-center gap-2">
+            <span>📑 抽出される 3 ページ（プレビュー）</span>
+            <span class="text-gray-400">— ファイル名を考える参考にどうぞ</span>
+          </div>
+          <div id="extract-preview-list" class="space-y-3">
+            <!-- JS で生成 -->
+          </div>
+        </div>
+
+        <!-- 右: ファイル名入力 -->
+        <div class="lg:col-span-2 p-6 overflow-y-auto">
+
+          <div class="mb-4 bg-blue-50 border border-blue-200 rounded p-3 text-sm">
+            <strong>選択中:</strong> 3 〜 5 ページ目（計 3 ページ）
+          </div>
+
+          <div class="mb-5">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              ✏️ ファイル名
+              <span class="text-xs text-gray-500 font-normal">（左のPDFを見ながら入力できます）</span>
+            </label>
+            <input id="extract-filename" type="text" value="山田太郎様_2026年5月" class="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500">
+            <p class="text-xs text-gray-500 mt-1">「.pdf」は自動的に付きます</p>
+          </div>
+
+          <!-- 候補ボタン（左PDFから推測した候補を提示） -->
+          <div class="mb-5">
+            <div class="text-xs text-gray-500 mb-2">💡 候補（クリックで反映）</div>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="document.getElementById('extract-filename').value='山田太郎様_2026年5月'" class="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded">山田太郎様_2026年5月</button>
+              <button onclick="document.getElementById('extract-filename').value='2026-05_山田太郎'" class="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded">2026-05_山田太郎</button>
+              <button onclick="document.getElementById('extract-filename').value='山田太郎_利用票'" class="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded">山田太郎_利用票</button>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">📁 保存先</label>
+            <button class="w-full px-4 py-3 text-sm text-left bg-gray-50 hover:bg-gray-100 border border-gray-300 rounded-lg flex items-center gap-2">
+              <span>ダウンロードフォルダ</span>
+              <span class="text-blue-600 ml-auto">変更</span>
+            </button>
+          </div>
+
+          <div class="flex gap-2">
+            <button onclick="closeExtractModal()" class="flex-1 px-4 py-3 bg-white hover:bg-gray-50 text-gray-700 text-base font-medium rounded-lg border border-gray-300">
+              キャンセル
+            </button>
+            <button onclick="confirmExtract()" class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-base font-medium rounded-lg">
+              抽出して保存
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================== -->
+  <!--  不具合報告フォーム（モーダル）         -->
+  <!-- ====================================== -->
+  <div id="modal-bug-report" class="modal hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-gray-900">🐛 不具合を報告する</h3>
+        <button onclick="closeBugReportModal()" class="text-gray-400 hover:text-gray-600 text-2xl">✕</button>
+      </div>
+
+      <div class="mb-4 bg-green-50 border border-green-200 rounded p-3 text-sm text-green-900">
+        🔒 PDFファイル名や内容は<strong>送信されません</strong>。安心してご利用ください。
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">どんな問題が起こりましたか？</label>
+        <textarea rows="4" placeholder="例: 大きなPDFを開こうとしたらフリーズしました" class="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"></textarea>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">再現手順（任意）</label>
+        <textarea rows="3" placeholder="例: ホーム画面→PDFをドラッグ→読み込み中フリーズ" class="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"></textarea>
+      </div>
+
+      <div class="mb-6 bg-gray-50 rounded p-3 text-xs text-gray-600">
+        <strong>送信される情報:</strong> ブラウザ名・バージョン・OS・操作内容のみ。<br>
+        PDFファイル名・内容・個人情報は含まれません。
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="closeBugReportModal()" class="flex-1 px-4 py-3 bg-white hover:bg-gray-50 text-gray-700 text-base font-medium rounded-lg border border-gray-300">
+          キャンセル
+        </button>
+        <button onclick="closeBugReportModal()" class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-base font-medium rounded-lg">
+          送信する
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================== -->
+  <!--  重いPDF警告（モーダル）               -->
+  <!-- ====================================== -->
+  <div id="modal-heavy" class="modal hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+      <div class="text-center mb-4">
+        <div class="text-5xl mb-3">⚠️</div>
+        <h3 class="text-xl font-bold text-gray-900 mb-2">大きなPDFが読み込まれました</h3>
+        <p class="text-sm text-gray-600">120ページ / 82MB のPDFです。お使いのPCで処理が重くなる可能性があります。</p>
+      </div>
+
+      <div class="bg-orange-50 border border-orange-200 rounded p-4 mb-4">
+        <div class="text-sm text-orange-900 font-medium mb-2">💡 おすすめ: 事前分割（軽量化）</div>
+        <p class="text-sm text-orange-800">まず50ページごとに分割してから、軽くなったファイルで作業すると安定します。</p>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <button onclick="closeHeavyModal(); showScreen('split')" class="w-full px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white text-base font-medium rounded-lg">
+          ✂️ 事前分割を行う（おすすめ）
+        </button>
+        <button onclick="closeHeavyModal(); showScreen('list')" class="w-full px-4 py-3 bg-white hover:bg-gray-50 text-gray-900 text-base font-medium rounded-lg border border-gray-300">
+          このまま開く
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================== -->
+  <!--  ガイドツアー（モーダル）               -->
+  <!-- ====================================== -->
+  <div id="modal-tour" class="modal hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-gray-900">❓ はじめての方へ</h3>
+        <button onclick="closeTour()" class="text-gray-400 hover:text-gray-600 text-2xl">✕</button>
+      </div>
+
+      <div class="space-y-3 mb-6">
+        <div class="flex gap-3 items-start">
+          <span class="text-2xl">①</span>
+          <div>
+            <div class="font-medium text-gray-900">PDFを読み込む</div>
+            <div class="text-sm text-gray-600">ホーム画面にPDFをドラッグ&ドロップ</div>
+          </div>
+        </div>
+        <div class="flex gap-3 items-start">
+          <span class="text-2xl">②</span>
+          <div>
+            <div class="font-medium text-gray-900">一覧で全ページを確認</div>
+            <div class="text-sm text-gray-600">サムネイル一覧で内容を把握</div>
+          </div>
+        </div>
+        <div class="flex gap-3 items-start">
+          <span class="text-2xl">③</span>
+          <div>
+            <div class="font-medium text-gray-900">分割するページを選ぶ</div>
+            <div class="text-sm text-gray-600">Shift+クリックで範囲選択</div>
+          </div>
+        </div>
+        <div class="flex gap-3 items-start">
+          <span class="text-2xl">④</span>
+          <div>
+            <div class="font-medium text-gray-900">抽出してリネーム</div>
+            <div class="text-sm text-gray-600">ファイル名を入力して保存</div>
+          </div>
+        </div>
+        <div class="flex gap-3 items-start">
+          <span class="text-2xl">⑤</span>
+          <div>
+            <div class="font-medium text-gray-900">100人分繰り返す</div>
+            <div class="text-sm text-gray-600">残ったページはそのまま保持されます</div>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="closeTour()" class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-base font-medium rounded-lg">
+        わかった、始める
+      </button>
+    </div>
+  </div>
+
+  <!-- ====================================== -->
+  <!--  ローカル動作中バッジ（全画面共通）     -->
+  <!-- ====================================== -->
+  <div class="fixed bottom-4 left-4 bg-green-100 border border-green-300 text-green-800 px-3 py-2 rounded-full text-sm flex items-center gap-2 shadow-sm">
+    <span>🔒</span>
+    <span>ローカル動作中</span>
+  </div>
+
+  <!-- ====================================== -->
+  <!--  不具合報告ボタン（全画面共通）         -->
+  <!-- ====================================== -->
+  <button onclick="openBugReportModal()" class="fixed bottom-4 right-4 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 px-4 py-2 rounded-full text-sm flex items-center gap-2 shadow-sm">
+    🐛 不具合報告
+  </button>
+
+  <!-- ====================================== -->
+  <!--  JavaScript                             -->
+  <!-- ====================================== -->
+  <script>
+    // 画面切替
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+      document.getElementById('screen-' + screenId).classList.remove('hidden');
+      window.scrollTo(0, 0);
+    }
+
+    // モーダル制御
+    function openExtractModal() {
+      document.getElementById('modal-extract').classList.remove('hidden');
+      generateExtractPreview();
+      setTimeout(() => document.getElementById('extract-filename').focus(), 100);
+    }
+    function closeExtractModal() { document.getElementById('modal-extract').classList.add('hidden'); }
+    function confirmExtract() {
+      const name = document.getElementById('extract-filename').value || '無題';
+      closeExtractModal();
+      alert('（モックアップ）抽出が完了しました: ' + name + '.pdf');
+    }
+
+    // 抽出プレビュー生成（左カラムに3ページ分のPDF風プレビュー）
+    function generateExtractPreview() {
+      const list = document.getElementById('extract-preview-list');
+      if (!list || list.children.length > 0) return;
+      const services = [
+        ['5/1（月）9:00-10:00','訪問介護'],
+        ['5/3（水）9:00-10:00','訪問介護'],
+        ['5/5（金）9:00-10:00','訪問介護'],
+        ['5/8（月）9:00-10:00','訪問介護'],
+        ['5/10（水）9:00-10:00','訪問介護'],
+        ['5/12（金）9:00-10:00','訪問介護'],
+        ['5/15（月）9:00-10:00','訪問介護'],
+      ];
+      const pages = [
+        { title: 'サービス利用票', subtitle: '（兼サービス提供票）' },
+        { title: 'サービス利用票別表', subtitle: '' },
+        { title: '居宅介護支援経過記録', subtitle: '' },
+      ];
+      pages.forEach((p, idx) => {
+        const pageHtml = `
+          <div class="bg-white shadow-md rounded-lg aspect-[3/4] relative overflow-hidden">
+            <div class="absolute top-2 left-2 px-2 py-0.5 bg-blue-600 text-white text-xs font-medium rounded">${idx + 3} ページ目</div>
+            <div class="p-6 text-sm">
+              <div class="text-center font-bold text-base mb-1">${p.title}</div>
+              ${p.subtitle ? `<div class="text-center text-xs text-gray-600 mb-3">${p.subtitle}</div>` : '<div class="mb-3"></div>'}
+              <div class="mb-2"><strong>利用者氏名:</strong> 山田 太郎 様</div>
+              <div class="mb-2"><strong>サービス提供月:</strong> 2026年5月</div>
+              <div class="mb-3"><strong>事業所:</strong> ○○訪問介護ステーション</div>
+              <div class="border-t border-gray-300 my-2"></div>
+              <div class="space-y-1 text-xs">
+                ${services.slice(0, 5 + idx).map(s => `<div class="flex justify-between"><span>${s[0]} ${s[1]}</span><span>1回</span></div>`).join('')}
+              </div>
+              <div class="mt-4 text-right text-xs text-gray-500">- ${idx + 1} -</div>
+            </div>
+          </div>
+        `;
+        list.insertAdjacentHTML('beforeend', pageHtml);
+      });
+    }
+    function openBugReportModal() { document.getElementById('modal-bug-report').classList.remove('hidden'); }
+    function closeBugReportModal() { document.getElementById('modal-bug-report').classList.add('hidden'); }
+    function showHeavyWarning() { document.getElementById('modal-heavy').classList.remove('hidden'); }
+    function closeHeavyModal() { document.getElementById('modal-heavy').classList.add('hidden'); }
+    function showTour() { document.getElementById('modal-tour').classList.remove('hidden'); }
+    function closeTour() { document.getElementById('modal-tour').classList.add('hidden'); }
+
+    // リネーム
+    function startRename() {
+      document.getElementById('filename-display').classList.add('hidden');
+      document.getElementById('filename-edit').classList.remove('hidden');
+      document.getElementById('filename-input').focus();
+      document.getElementById('filename-input').select();
+    }
+    function saveRename() {
+      const newName = document.getElementById('filename-input').value;
+      document.getElementById('filename-text').textContent = newName;
+      cancelRename();
+    }
+    function cancelRename() {
+      document.getElementById('filename-display').classList.remove('hidden');
+      document.getElementById('filename-edit').classList.add('hidden');
+    }
+
+    // スタンプ追加
+    function addStamp() {
+      alert('（モックアップ）PDF上の任意の位置をクリックしてスタンプを配置します。\n既存のスタンプはドラッグで移動、クリックで削除できます。');
+    }
+
+    // ダミーデータ: 介護現場想定の利用者名・サービス内容
+    const dummyNames = ['山田 太郎','佐藤 花子','鈴木 一郎','田中 美咲','高橋 健','伊藤 明美','渡辺 次郎','中村 幸子','小林 博','加藤 奈々','吉田 拓也','山本 由美','松本 和也','井上 真理','木村 浩','林 洋子','清水 大輔','森 久美子','池田 翔太','橋本 さくら','阿部 信也','石川 美穂','山下 隆','前田 優子','近藤 剛','岡田 香織','坂本 義男','長谷川 千夏','原田 裕介','森田 結衣'];
+    const dummyServices = [
+      ['訪問介護','1h'],['訪問看護','1h'],['通所介護','終日'],['短期入所','1泊'],['福祉用具貸与','月額']
+    ];
+
+    function makeThumbContent(name) {
+      const rows = [];
+      for (let d = 1; d <= 5; d++) {
+        const day = d * 2 + Math.floor(Math.random() * 2);
+        const svc = dummyServices[d % dummyServices.length];
+        rows.push(`<div class="thumb-row"><span>5/${day} ${svc[0]}</span><span>${svc[1]}</span></div>`);
+      }
+      return `
+        <div class="thumb-content">
+          <div class="thumb-title">サービス利用票</div>
+          <div class="thumb-field"><strong>氏名:</strong> ${name} 様</div>
+          <div class="thumb-field"><strong>期間:</strong> 2026年5月</div>
+          <div class="thumb-divider"></div>
+          ${rows.join('')}
+        </div>
+      `;
+    }
+
+    // サムネイル生成
+    function generateThumbnails() {
+      const grid = document.getElementById('thumbnail-grid');
+      const selected = [3, 4, 5]; // 選択中のページ番号
+      const rotated = [7, 12]; // 横向きのページ
+      for (let i = 1; i <= 30; i++) {
+        const isSelected = selected.includes(i);
+        const isRotated = rotated.includes(i);
+        const name = dummyNames[(i - 1) % dummyNames.length];
+        const card = document.createElement('div');
+        card.className = `bg-white border-2 rounded-lg p-2 hover:shadow-md transition cursor-pointer ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`;
+        card.innerHTML = `
+          <div class="relative">
+            <div class="thumbnail-page rounded ${isRotated ? 'thumbnail-rotated' : ''}">
+              ${makeThumbContent(name)}
+            </div>
+            <input type="checkbox" ${isSelected ? 'checked' : ''} class="absolute top-1 left-1 w-5 h-5 cursor-pointer" onclick="event.stopPropagation()">
+            <button onclick="event.stopPropagation()" class="absolute top-1 right-1 w-7 h-7 bg-white/90 hover:bg-white rounded-full text-sm flex items-center justify-center shadow-sm" title="右に90°回転">🔄</button>
+          </div>
+          <div class="text-xs text-center text-gray-700 mt-2 font-medium">${i} ページ目（${name} 様）</div>
+        `;
+        card.onclick = () => showScreen('preview');
+        grid.appendChild(card);
+      }
+    }
+
+    // ミニサムネ生成（プレビュー画面の左サイドバー）
+    function generateMiniThumbnails() {
+      const list = document.getElementById('mini-thumbnail-list');
+      const name = '山田 太郎';
+      for (let i = 1; i <= 3; i++) {
+        const card = document.createElement('div');
+        card.className = `border-2 rounded p-2 cursor-pointer ${i === 1 ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-400'}`;
+        card.innerHTML = `
+          <div class="thumbnail-page rounded mb-1">${makeThumbContent(name)}</div>
+          <div class="text-xs text-center text-gray-700">${i} / 3</div>
+        `;
+        card.onclick = () => { document.getElementById('current-page').textContent = i; };
+        list.appendChild(card);
+      }
+    }
+
+    // サムネイルサイズ変更（6段階: 極小・小・中・大・特大・巨大）
+    function updateThumbSize(level) {
+      const grid = document.getElementById('thumbnail-grid');
+      const label = document.getElementById('size-label');
+      const sizeMap = {
+        '1': { cols: 'grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12', name: '極小' },
+        '2': { cols: 'grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8',   name: '小' },
+        '3': { cols: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6',   name: '中' },
+        '4': { cols: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4',   name: '大' },
+        '5': { cols: 'grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3',   name: '特大' },
+        '6': { cols: 'grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2',   name: '巨大' },
+      };
+      const conf = sizeMap[level] || sizeMap['4'];
+      grid.className = 'grid gap-3 ' + conf.cols;
+      if (label) label.textContent = conf.name;
+    }
+
+    // 初期化
+    document.addEventListener('DOMContentLoaded', () => {
+      generateThumbnails();
+      generateMiniThumbnails();
+
+      // Enter / Esc キー対応（リネーム）
+      document.getElementById('filename-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') saveRename();
+        if (e.key === 'Escape') cancelRename();
+      });
+    });
+  </script>
+</body>
+</html>

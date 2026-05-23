@@ -1,0 +1,18 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', system-ui, sans-serif;
+  background: #f9fafb;
+  color: #111827;
+}
+
+button {
+  font-family: inherit;
+}
+
+input[type="file"] {
+  font-family: inherit;
+}
