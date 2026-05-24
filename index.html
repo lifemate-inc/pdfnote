@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'none'; frame-src 'none'; object-src 'none';"
+    />
+    <title>Smart PDF — ローカル完結の軽量PDFツール</title>
+    <meta
+      name="description"
+      content="PDFの分割・回転・スタンプ追記を、個人情報がPCから出ないローカル環境で安全に処理できる無料ツール"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
