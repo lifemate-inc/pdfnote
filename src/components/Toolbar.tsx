@@ -137,12 +137,12 @@ export const Toolbar = ({ onExtract, onNewFile }: ToolbarProps) => {
             ? 'bg-orange-500 text-white hover:bg-orange-600'
             : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
         }`}
-        title="分割点を設定して複数のPDFに一括分割"
+        title="分割点を設定して複数のPDFに分割"
       >
         <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
         </svg>
-        {splitMode ? '分割モード終了' : '一括分割'}
+        {splitMode ? '分割モード終了' : '✂ 分割'}
       </button>
 
       {/* 選択ページを抽出（分割モード中は非表示） */}

@@ -90,6 +90,7 @@ interface PdfState {
   setThumbnailSizeLevel: (level: ThumbnailSizeLevel) => void
   setAppView: (view: AppView) => void
   setPreviewPageNum: (n: number) => void
+  setFileName: (name: string) => void
   setSplitMode: (mode: boolean) => void
   toggleSplitCutPoint: (afterPage: number) => void
   clearSplitCutPoints: () => void
@@ -153,10 +154,10 @@ export const usePdfStore = create<PdfState>()((set, get) => ({
         status: `サムネイル生成中... (0/${pdf.numPages})`,
       })
 
-      // scale 0.5: 文字が読めるサイズ（0.3 だと拡大時に潰れる）
+      // scale 0.7: 巨大サイズでも文字が読めるクオリティ（0.5 だと拡大時に潰れる）
       const thumbnails: string[] = []
       for (let i = 1; i <= pdf.numPages; i++) {
-        const dataUrl = await generateThumbnail(pdf, i, 0.5)
+        const dataUrl = await generateThumbnail(pdf, i, 0.7)
         thumbnails.push(dataUrl)
 
         if (i % 8 === 0 || i === pdf.numPages) {
@@ -265,6 +266,8 @@ export const usePdfStore = create<PdfState>()((set, get) => ({
   setAppView: (view: AppView) => set({ appView: view }),
 
   setPreviewPageNum: (n: number) => set({ previewPageNum: n }),
+
+  setFileName: (name: string) => set({ fileName: name }),
 
   reset: () => {
     set({
