@@ -20,10 +20,10 @@ export const HomePage = () => {
               />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Smart PDF</h1>
+          <h1 className="text-3xl font-bold text-gray-900">PDFノート</h1>
         </div>
         <p className="text-gray-500 text-sm">
-          PDFの分割・回転・スタンプ追記を、ローカルで安全に処理
+          PDFの閲覧・分割・回転・テキスト追記を、ローカルで安全に処理
         </p>
       </div>
 
@@ -47,14 +47,10 @@ export const HomePage = () => {
         ))}
       </div>
 
-      {/* 事前分割リンク（目立たない形で） */}
+      {/* 大容量PDFのヒント（情報提示のみ） */}
       <div className="mt-12 text-center">
         <p className="text-xs text-gray-400">
-          大容量PDFで動作が重い場合は
-          <button className="ml-1 text-blue-400 underline-offset-2 hover:underline">
-            事前分割モード
-          </button>
-          をお試しください
+          大容量PDFで動作が重い場合は、まず開いてから「分割」機能で小さく分けてご利用ください
         </p>
       </div>
 

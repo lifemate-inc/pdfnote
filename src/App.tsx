@@ -3,30 +3,27 @@ import { HomePage } from './pages/HomePage'
 import { ListPage } from './pages/ListPage'
 import { ScrollViewer } from './pages/ScrollViewer'
 import { LocalBadge } from './components/LocalBadge'
+import { RestorePrompt } from './components/modals/RestorePrompt'
+import { UnloadWarning } from './components/UnloadWarning'
+import { UpdatePrompt } from './components/UpdatePrompt'
 
 export default function App() {
   const pageCount = usePdfStore((s) => s.pageCount)
   const appView = usePdfStore((s) => s.appView)
 
-  if (pageCount === 0) return (
-    <>
-      <HomePage />
-      <LocalBadge />
-    </>
-  )
+  const content = (() => {
+    if (pageCount === 0) return <HomePage />
+    if (appView === 'list') return <ListPage />
+    return <ScrollViewer />
+  })()
 
-  if (appView === 'list') return (
-    <>
-      <ListPage />
-      <LocalBadge />
-    </>
-  )
-
-  // デフォルト: 縦スクロール閲覧画面（viewer）
   return (
     <>
-      <ScrollViewer />
+      {content}
       <LocalBadge />
+      <RestorePrompt />
+      <UnloadWarning />
+      <UpdatePrompt />
     </>
   )
 }

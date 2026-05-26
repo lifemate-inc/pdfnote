@@ -3,14 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      Content Security Policy:
+      - default-src 'self': 既定で同一オリジンのみ
+      - script-src 'self' 'wasm-unsafe-eval': 自前JS + WASM実行のみ。blob:は不許可
+      - worker-src 'self' blob:: pdf.js / tesseract.js ワーカー用
+      - style-src 'self' 'unsafe-inline': Tailwind の inline スタイルが必要
+      - img-src 'self' blob: data:: サムネイル (data URL) / 生成画像 (blob)
+      - connect-src 'self': 同一オリジンの静的 asset (OCR 辞書等) のみ。外部通信不可
+      - frame-src/object-src 'none': iframe/object 完全禁止
+      - base-uri 'self': base 要素による URL ハイジャック防止
+      - form-action 'none': フォーム送信完全禁止
+      - manifest-src 'self': PWA マニフェスト
+      ※ frame-ancestors は meta タグでは無効。GitHub Pages では HTTP ヘッダー設定不可のため、
+         埋め込み防止は X-Frame-Options ヘッダー (GitHub Pages デフォルトで DENY) に依存。
+    -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'none'; frame-src 'none'; object-src 'none';"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; manifest-src 'self';"
     />
-    <title>Smart PDF — ローカル完結の軽量PDFツール</title>
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <!-- PWA manifest はビルド時に vite-plugin-pwa が自動挿入します -->
+    <title>PDFノート — ローカル完結の軽量PDF編集ツール</title>
     <meta
       name="description"
-      content="PDFの分割・回転・スタンプ追記を、個人情報がPCから出ないローカル環境で安全に処理できる無料ツール"
+      content="PDFの閲覧・分割・回転・テキスト追記を、個人情報がPCから出ないローカル環境で安全に処理できる無料ツール"
     />
   </head>
   <body>

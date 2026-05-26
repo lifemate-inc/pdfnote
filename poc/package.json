@@ -1,9 +1,9 @@
 {
-  "name": "smart-pdf-poc",
+  "name": "pdfnote-poc",
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "description": "Smart PDF — Phase 0 技術検証 PoC（120ページPDFの性能実証）",
+  "description": "PDFノート — Phase 0 技術検証 PoC（120ページPDFの性能実証）",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

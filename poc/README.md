@@ -1,4 +1,4 @@
-# Smart PDF — Phase 0 技術検証 PoC
+# PDFノート — Phase 0 技術検証 PoC
 
 このディレクトリは Phase 0 Step 4（技術検証）用の PoC です。
 
@@ -13,7 +13,7 @@
 ## 起動方法
 
 ```powershell
-cd projects/smart-pdf/poc
+cd projects/pdfnote/poc
 npm install
 npm run dev
 ```

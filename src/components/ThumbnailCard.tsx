@@ -1,5 +1,39 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { usePdfStore, THUMBNAIL_SIZES } from '../stores/usePdfStore'
+
+// ============================================================
+// セグメントカラー（分割モードのグループ識別用）
+// ============================================================
+
+const SEGMENT_BORDER_COLORS = [
+  '#3b82f6', // blue
+  '#10b981', // emerald
+  '#8b5cf6', // violet
+  '#f97316', // orange
+  '#f43f5e', // rose
+  '#06b6d4', // cyan
+  '#eab308', // yellow
+  '#ec4899', // pink
+  '#14b8a6', // teal
+  '#6366f1', // indigo
+]
+
+const SEGMENT_BG_COLORS = [
+  'rgba(59,130,246,0.08)',
+  'rgba(16,185,129,0.08)',
+  'rgba(139,92,246,0.08)',
+  'rgba(249,115,22,0.08)',
+  'rgba(244,63,94,0.08)',
+  'rgba(6,182,212,0.08)',
+  'rgba(234,179,8,0.08)',
+  'rgba(236,72,153,0.08)',
+  'rgba(20,184,166,0.08)',
+  'rgba(99,102,241,0.08)',
+]
+
+// ============================================================
+// ThumbnailCard
+// ============================================================
 
 interface ThumbnailCardProps {
   pageNum: number // 1-based
@@ -11,6 +45,8 @@ export const ThumbnailCard: React.FC<ThumbnailCardProps> = ({ pageNum }) => {
   const isSelected = usePdfStore((s) => s.selectedPages.has(pageNum))
   const hasMemo = usePdfStore((s) => (s.stamps[pageNum - 1] ?? []).length > 0)
   const sizeLevel = usePdfStore((s) => s.thumbnailSizeLevel)
+  const splitMode = usePdfStore((s) => s.splitMode)
+  const splitCutPoints = usePdfStore((s) => s.splitCutPoints)
   const togglePage = usePdfStore((s) => s.togglePage)
   const rotatePage = usePdfStore((s) => s.rotatePage)
   const setPreviewPageNum = usePdfStore((s) => s.setPreviewPageNum)
@@ -19,7 +55,23 @@ export const ThumbnailCard: React.FC<ThumbnailCardProps> = ({ pageNum }) => {
   const size = THUMBNAIL_SIZES[sizeLevel]
   const labelFontSize = Math.max(10, Math.min(14, size / 16))
 
+  // 分割モード: このページが属するセグメント番号を計算
+  const segmentIndex = useMemo(() => {
+    if (!splitMode) return 0
+    const sorted = [...splitCutPoints].sort((a, b) => a - b)
+    let idx = 0
+    for (const cp of sorted) {
+      if (pageNum > cp) idx++
+      else break
+    }
+    return idx
+  }, [splitMode, splitCutPoints, pageNum])
+
+  const segBorderColor = splitMode ? SEGMENT_BORDER_COLORS[segmentIndex % SEGMENT_BORDER_COLORS.length] : undefined
+  const segBgColor = splitMode ? SEGMENT_BG_COLORS[segmentIndex % SEGMENT_BG_COLORS.length] : undefined
+
   const handleClick = (e: React.MouseEvent) => {
+    if (splitMode) return  // 分割モード中は選択無効
     togglePage(pageNum, e.shiftKey, e.ctrlKey || e.metaKey)
   }
 
@@ -44,47 +96,67 @@ export const ThumbnailCard: React.FC<ThumbnailCardProps> = ({ pageNum }) => {
     <div
       className={`
         group relative cursor-pointer rounded-lg border-2 transition-all duration-150 select-none
-        ${
-          isSelected
+        ${splitMode
+          ? 'cursor-default'
+          : isSelected
             ? 'border-blue-600 bg-blue-50 shadow-md ring-1 ring-blue-300'
             : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm'
         }
       `}
-      style={{ width: size, padding: 6 }}
+      style={{
+        width: size,
+        padding: 6,
+        borderColor: splitMode ? segBorderColor : undefined,
+        borderWidth: splitMode ? 2 : undefined,
+        background: splitMode ? segBgColor : undefined,
+      }}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
-      role="checkbox"
-      aria-checked={isSelected}
+      role={splitMode ? undefined : 'checkbox'}
+      aria-checked={splitMode ? undefined : isSelected}
       aria-label={`${pageNum}ページ目${isSelected ? '（選択中）' : ''}`}
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === ' ') handleClick(e as unknown as React.MouseEvent)
+        if (!splitMode) {
+          if (e.key === ' ') handleClick(e as unknown as React.MouseEvent)
+        }
         if (e.key === 'Enter') handleDoubleClick(e as unknown as React.MouseEvent)
       }}
-      title="クリック: 選択 / ダブルクリック: 閲覧・テキスト追加"
+      title={splitMode ? `${pageNum}ページ目（グループ${segmentIndex + 1}）` : 'クリック: 選択 / ダブルクリック: 閲覧・テキスト追加'}
     >
-      {/* 選択チェックマーク */}
-      <div
-        className={`
-          absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded-full
-          transition-all duration-150
-          ${
-            isSelected
+      {/* 分割モード: グループ番号バッジ */}
+      {splitMode && (
+        <div
+          className="absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded-full text-white text-xs font-bold shadow-sm"
+          style={{ background: segBorderColor }}
+        >
+          {segmentIndex + 1}
+        </div>
+      )}
+
+      {/* 通常モード: 選択チェックマーク */}
+      {!splitMode && (
+        <div
+          className={`
+            absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded-full
+            transition-all duration-150
+            ${isSelected
               ? 'bg-blue-600 opacity-100'
               : 'border border-gray-300 bg-white/80 opacity-0 group-hover:opacity-100'
-          }
-        `}
-      >
-        {isSelected && (
-          <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fillRule="evenodd"
-              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-              clipRule="evenodd"
-            />
-          </svg>
-        )}
-      </div>
+            }
+          `}
+        >
+          {isSelected && (
+            <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+          )}
+        </div>
+      )}
 
       {/* メモ済みバッジ */}
       {hasMemo && (
@@ -149,10 +221,12 @@ export const ThumbnailCard: React.FC<ThumbnailCardProps> = ({ pageNum }) => {
         )}
       </div>
 
-      {/* ページ番号 */}
-      <div className="mt-1 text-center text-gray-500" style={{ fontSize: labelFontSize }}>
-        {pageNum}
-      </div>
+      {/* ページ番号（分割モード時は非表示） */}
+      {!splitMode && (
+        <div className="mt-1 text-center text-gray-500" style={{ fontSize: labelFontSize }}>
+          {pageNum}
+        </div>
+      )}
     </div>
   )
 }

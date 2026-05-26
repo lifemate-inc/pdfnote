@@ -180,7 +180,7 @@ export default function App() {
   return (
     <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto' }}>
       <h1 style={{ borderBottom: '2px solid #2563eb', paddingBottom: '8px' }}>
-        Smart PDF — Phase 0 技術検証 PoC
+        PDFノート — Phase 0 技術検証 PoC
       </h1>
       <p style={{ color: '#6b7280' }}>
         120ページPDFがブラウザで実用速度で扱えるかを実証します。判定基準: 30秒以内に一覧表示・メモリ 2GB 以下。

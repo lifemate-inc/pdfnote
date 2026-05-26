@@ -9,7 +9,6 @@ export const ListPage = () => {
   const selectedPages = usePdfStore((s) => s.selectedPages)
   const status = usePdfStore((s) => s.status)
   const isLoading = usePdfStore((s) => s.isLoading)
-  const reset = usePdfStore((s) => s.reset)
   const pageCount = usePdfStore((s) => s.pageCount)
   const splitMode = usePdfStore((s) => s.splitMode)
   const splitCutPoints = usePdfStore((s) => s.splitCutPoints)
@@ -25,9 +24,10 @@ export const ListPage = () => {
   }
 
   const handleNewFile = () => {
-    if (isLoading || window.confirm('現在のPDFを閉じて、新しいPDFを開きますか？')) {
-      reset()
-    }
+    // 新しいタブでアプリを開く（現在のタブのPDFはそのまま）
+    // ?new=1 を付けて、新規タブでは復元プロンプトをスキップ
+    const baseUrl = window.location.origin + window.location.pathname
+    window.open(`${baseUrl}?new=1`, '_blank')
   }
 
   // 分割点からセグメントを計算

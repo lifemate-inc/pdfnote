@@ -1,4 +1,4 @@
-# Smart PDF — Phase 1 実装計画書
+# PDFノート — Phase 1 実装計画書
 
 **作成日:** 2026-05-23  
 **ステータス:** Phase 0 完了・Phase 1 着手前（承認待ち）  
@@ -307,8 +307,8 @@ export default defineConfig({
       registerType: 'prompt',           // 更新時にユーザーに確認
       includeAssets: ['favicon.ico'],
       manifest: {
-        name: 'Smart PDF',
-        short_name: 'SmartPDF',
+        name: 'PDFノート',
+        short_name: 'PDFノート',
         description: 'ローカル完結の軽量PDFツール',
         theme_color: '#2563eb',
         icons: [
@@ -334,7 +334,7 @@ export default defineConfig({
 #### 4-2. GitHub リポジトリ・CI/CD（F-12）
 
 **リポジトリ:**
-- `lifemate-inc/smart-pdf`（Phase 3 公開前は private にしておくか、ユーザーの判断）
+- `lifemate-inc/pdfnote`（Phase 3 公開前は private にしておくか、ユーザーの判断）
 - `main` ブランチ: 本番（GitHub Pages）
 - `develop` ブランチ: ステージング（パイロット事業所の先行確認用）
 
@@ -377,7 +377,7 @@ jobs:
 
 **vite.config.ts の base 設定（GitHub Pages サブパス対応）:**
 ```typescript
-base: '/smart-pdf/',   // リポジトリ名に合わせる
+base: '/pdfnote/',   // リポジトリ名に合わせる
 ```
 
 #### 4-3. セキュリティ設定

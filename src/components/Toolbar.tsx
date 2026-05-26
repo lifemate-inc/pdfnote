@@ -1,5 +1,8 @@
 import { usePdfStore, THUMBNAIL_LABELS, THUMBNAIL_SIZES, ThumbnailSizeLevel } from '../stores/usePdfStore'
 
+const MIN_THUMB_LEVEL: ThumbnailSizeLevel = 1
+const MAX_THUMB_LEVEL: ThumbnailSizeLevel = 6
+
 interface ToolbarProps {
   onExtract: () => void
   onNewFile: () => void
@@ -21,7 +24,10 @@ export const Toolbar = ({ onExtract, onNewFile }: ToolbarProps) => {
   const selectedCount = selectedPages.size
   const allSelected = selectedCount === pageCount && pageCount > 0
 
-  const sizeLevels = Object.keys(THUMBNAIL_SIZES).map(Number) as ThumbnailSizeLevel[]
+  const decSize = () =>
+    setThumbnailSizeLevel(Math.max(MIN_THUMB_LEVEL, sizeLevel - 1) as ThumbnailSizeLevel)
+  const incSize = () =>
+    setThumbnailSizeLevel(Math.min(MAX_THUMB_LEVEL, sizeLevel + 1) as ThumbnailSizeLevel)
 
   const handleToggleSplitMode = () => {
     if (splitMode) {
@@ -112,19 +118,25 @@ export const Toolbar = ({ onExtract, onNewFile }: ToolbarProps) => {
       <div className="flex-1" />
 
       {/* サムネイルサイズ（分割モード中も表示） */}
-      <div className="flex items-center gap-0.5">
-        <span className="text-xs text-gray-400 mr-1">サイズ</span>
-        {sizeLevels.map((level) => (
+      <div className="flex items-center gap-1">
+        <span className="text-xs text-gray-400">サイズ</span>
+        <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 px-1 py-0.5">
           <button
-            key={level}
-            onClick={() => setThumbnailSizeLevel(level)}
-            className={`rounded px-1.5 py-1 text-xs font-medium transition-colors ${
-              sizeLevel === level ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'
-            }`}
-          >
-            {THUMBNAIL_LABELS[level]}
-          </button>
-        ))}
+            onClick={decSize}
+            disabled={sizeLevel <= MIN_THUMB_LEVEL}
+            className="flex h-6 w-6 items-center justify-center rounded text-gray-600 hover:bg-gray-100 text-base font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+            title="サムネを小さく"
+          >−</button>
+          <span className="min-w-[36px] text-center text-xs text-gray-600 tabular-nums" title={`${THUMBNAIL_SIZES[sizeLevel]}px`}>
+            {THUMBNAIL_LABELS[sizeLevel]}
+          </span>
+          <button
+            onClick={incSize}
+            disabled={sizeLevel >= MAX_THUMB_LEVEL}
+            className="flex h-6 w-6 items-center justify-center rounded text-gray-600 hover:bg-gray-100 text-base font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+            title="サムネを大きく"
+          >＋</button>
+        </div>
       </div>
 
       <div className="h-5 w-px bg-gray-200" />
@@ -164,13 +176,14 @@ export const Toolbar = ({ onExtract, onNewFile }: ToolbarProps) => {
         </button>
       )}
 
-      {/* 新しいPDF */}
+      {/* 別のPDF（新規タブで開く） */}
       <button
         onClick={onNewFile}
         className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+        title="別のPDFを新しいタブで開く"
       >
         <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
         </svg>
         別のPDF
       </button>

@@ -1,4 +1,4 @@
-# Smart PDF 画面遷移図
+# PDFノート 画面遷移図
 
 **バージョン:** 0.1（Phase 0 ドラフト）
 **最終更新:** 2026-05-23
@@ -68,7 +68,7 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     actor User as 介護スタッフ
-    participant App as Smart PDF
+    participant App as PDFノート
     participant Browser as ブラウザ
     participant Disk as ローカルディスク
 
@@ -102,7 +102,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor User as 介護スタッフ
-    participant App as Smart PDF
+    participant App as PDFノート
 
     User->>App: 「事前分割（軽量化）」ボタンクリック
     App-->>User: 設定画面表示<br/>（N=50 デフォルト・変更可）

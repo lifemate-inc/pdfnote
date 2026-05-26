@@ -18,6 +18,7 @@ interface ExtractModalProps {
 export const ExtractModal: React.FC<ExtractModalProps> = ({ onClose }) => {
   const selectedPages = usePdfStore((s) => s.selectedPages)
   const rotations = usePdfStore((s) => s.rotations)
+  const stamps = usePdfStore((s) => s.stamps)
   const pdfArrayBuffer = usePdfStore((s) => s.pdfArrayBuffer)
   const fileName = usePdfStore((s) => s.fileName)
 
@@ -92,7 +93,7 @@ export const ExtractModal: React.FC<ExtractModalProps> = ({ onClose }) => {
     setIsSaving(true)
     setSaveError('')
     try {
-      const bytes = await extractPages(pdfArrayBuffer, sortedPages, rotations)
+      const bytes = await extractPages(pdfArrayBuffer, sortedPages, rotations, stamps)
       const outFileName = name.endsWith('.pdf') ? name : `${name}.pdf`
       await saveFile(bytes, outFileName)
       setSavedSuccess(true)

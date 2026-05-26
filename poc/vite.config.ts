@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Smart PDF PoC: Vite 設定
+// PDFノート PoC: Vite 設定
 export default defineConfig({
   plugins: [react()],
   worker: {

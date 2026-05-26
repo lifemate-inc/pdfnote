@@ -1,150 +1,8 @@
-import React from 'react'
 import { usePdfStore, THUMBNAIL_SIZES } from '../stores/usePdfStore'
 import { ThumbnailCard } from './ThumbnailCard'
 
 // ============================================================
-// 分割モード用: ページ間クリックで分割点を設定するリストビュー
-// ============================================================
-
-const SplitModeList: React.FC = () => {
-  const pageCount = usePdfStore((s) => s.pageCount)
-  const thumbnails = usePdfStore((s) => s.thumbnails)
-  const rotations = usePdfStore((s) => s.rotations)
-  const splitCutPoints = usePdfStore((s) => s.splitCutPoints)
-  const toggleSplitCutPoint = usePdfStore((s) => s.toggleSplitCutPoint)
-  const rotatePage = usePdfStore((s) => s.rotatePage)
-  const stamps = usePdfStore((s) => s.stamps)
-  const setPreviewPageNum = usePdfStore((s) => s.setPreviewPageNum)
-  const setAppView = usePdfStore((s) => s.setAppView)
-
-  // どのセグメントに属するか（分割点から計算）
-  const getSegmentIndex = (pageNum: number): number => {
-    const sorted = [...splitCutPoints].sort((a, b) => a - b)
-    let idx = 0
-    for (const cp of sorted) {
-      if (pageNum > cp) idx++
-      else break
-    }
-    return idx
-  }
-
-  // セグメントの色（最大10色でサイクル）
-  const SEGMENT_COLORS = [
-    'border-blue-400 bg-blue-50',
-    'border-emerald-400 bg-emerald-50',
-    'border-violet-400 bg-violet-50',
-    'border-orange-400 bg-orange-50',
-    'border-rose-400 bg-rose-50',
-    'border-cyan-400 bg-cyan-50',
-    'border-yellow-400 bg-yellow-50',
-    'border-pink-400 bg-pink-50',
-    'border-teal-400 bg-teal-50',
-    'border-indigo-400 bg-indigo-50',
-  ]
-  const SEGMENT_BADGES = [
-    'bg-blue-500',
-    'bg-emerald-500',
-    'bg-violet-500',
-    'bg-orange-500',
-    'bg-rose-500',
-    'bg-cyan-500',
-    'bg-yellow-500',
-    'bg-pink-500',
-    'bg-teal-500',
-    'bg-indigo-500',
-  ]
-
-  const rotation = (pageNum: number) => rotations[pageNum - 1] ?? 0
-  const hasMemo = (pageNum: number) => (stamps[pageNum - 1] ?? []).length > 0
-
-  return (
-    <div className="max-w-2xl mx-auto">
-      {Array.from({ length: pageCount }, (_, i) => i + 1).map((pageNum) => {
-        const isCut = splitCutPoints.has(pageNum)
-        const isLast = pageNum === pageCount
-        const segIdx = getSegmentIndex(pageNum)
-        const colorClass = SEGMENT_COLORS[segIdx % SEGMENT_COLORS.length]
-        const badgeClass = SEGMENT_BADGES[segIdx % SEGMENT_BADGES.length]
-
-        return (
-          <React.Fragment key={pageNum}>
-            {/* ページ行 */}
-            <div className={`flex items-center gap-3 px-3 py-2 rounded-lg border-l-4 mb-1 ${colorClass}`}>
-              {/* セグメント番号バッジ */}
-              <div className={`flex-shrink-0 w-6 h-6 rounded-full ${badgeClass} flex items-center justify-center`}>
-                <span className="text-xs font-bold text-white">{segIdx + 1}</span>
-              </div>
-
-              {/* サムネイル */}
-              <div className="relative flex-shrink-0">
-                {thumbnails[pageNum - 1] ? (
-                  <img
-                    src={thumbnails[pageNum - 1]}
-                    className="h-20 rounded border border-gray-200 shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
-                    alt={`${pageNum}p`}
-                    draggable={false}
-                    style={{
-                      transform: rotation(pageNum) ? `rotate(${rotation(pageNum)}deg)` : undefined,
-                      scale: rotation(pageNum) === 90 || rotation(pageNum) === 270 ? '0.7' : undefined,
-                    }}
-                    onDoubleClick={() => { setPreviewPageNum(pageNum); setAppView('viewer') }}
-                    title="ダブルクリックで閲覧"
-                  />
-                ) : (
-                  <div className="h-20 w-14 rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-400 border-t-transparent" />
-                  </div>
-                )}
-                {hasMemo(pageNum) && (
-                  <div className="absolute -right-1 -top-1 rounded-full bg-amber-400 px-1 text-xs font-bold text-white leading-4">✏</div>
-                )}
-              </div>
-
-              {/* ページ情報 */}
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-gray-700">{pageNum}ページ</div>
-                <div className="text-xs text-gray-400">グループ {segIdx + 1}</div>
-              </div>
-
-              {/* 回転ボタン */}
-              <button
-                onClick={() => rotatePage(pageNum)}
-                className="flex-shrink-0 flex h-7 w-7 items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
-                title="右に90度回転"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
-            </div>
-
-            {/* 分割点ゾーン（最終ページ以外） */}
-            {!isLast && (
-              <div
-                className={`group flex items-center gap-2 mx-4 cursor-pointer py-2 px-3 rounded-lg transition-all ${
-                  isCut
-                    ? 'bg-red-50 hover:bg-red-100'
-                    : 'hover:bg-gray-50'
-                }`}
-                onClick={() => toggleSplitCutPoint(pageNum)}
-                title={isCut ? 'クリックで分割点を解除' : `${pageNum}ページと${pageNum + 1}ページの間で分割`}
-              >
-                <div className={`flex-1 border-t-2 transition-colors ${isCut ? 'border-dashed border-red-400' : 'border-gray-200 group-hover:border-gray-300'}`} />
-                <span className={`flex-shrink-0 text-xs font-medium transition-colors ${isCut ? 'text-red-600' : 'text-gray-300 group-hover:text-gray-500'}`}>
-                  {isCut ? '✂ ここで切る（クリックで解除）' : '＋ ここで切る'}
-                </span>
-                <div className={`flex-1 border-t-2 transition-colors ${isCut ? 'border-dashed border-red-400' : 'border-gray-200 group-hover:border-gray-300'}`} />
-              </div>
-            )}
-          </React.Fragment>
-        )
-      })}
-    </div>
-  )
-}
-
-// ============================================================
-// ThumbnailGrid: 通常モード / 分割モードで切り替え
+// ThumbnailGrid
 // ============================================================
 
 export const ThumbnailGrid = () => {
@@ -152,8 +10,13 @@ export const ThumbnailGrid = () => {
   const sizeLevel = usePdfStore((s) => s.thumbnailSizeLevel)
   const loadProgress = usePdfStore((s) => s.loadProgress)
   const splitMode = usePdfStore((s) => s.splitMode)
+  const splitCutPoints = usePdfStore((s) => s.splitCutPoints)
+  const toggleSplitCutPoint = usePdfStore((s) => s.toggleSplitCutPoint)
 
   const size = THUMBNAIL_SIZES[sizeLevel]
+  // カットゾーンの幅。gap=12の中央に配置するため、左6px右6px計12pxの幅で中央を合わせる
+  const CUT_ZONE_W = 24  // gap12 より少し広く（クリックしやすく）
+  const GAP = 12
 
   return (
     <div className="flex-1 overflow-y-auto p-4">
@@ -168,15 +31,91 @@ export const ThumbnailGrid = () => {
       )}
 
       {splitMode ? (
-        /* 分割モード: ページ間クリック式リストビュー */
-        <SplitModeList />
+        // ================================================================
+        // 分割モード: flexbox（幅が正確に size になり、カットゾーンが中央に収まる）
+        //   gap=12px のとき cut-zone を left:calc(100% - GAP/2 - CUT_ZONE_W/2) で中央に配置
+        // ================================================================
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: GAP, alignItems: 'flex-start' }}>
+          {Array.from({ length: pageCount }, (_, i) => {
+            const pageNum = i + 1
+            const isLast = pageNum === pageCount
+            const isCut = splitCutPoints.has(pageNum)
+
+            return (
+              // カードとカットゾーンを一体のflex itemとして扱う
+              <div
+                key={pageNum}
+                style={{ position: 'relative', overflow: 'visible', flexShrink: 0 }}
+              >
+                <ThumbnailCard pageNum={pageNum} />
+
+                {/* カットゾーン: カード右端から gap の中央に配置（常時表示） */}
+                {!isLast && (
+                  <div
+                    className="absolute top-0 bottom-0 z-20 cursor-pointer"
+                    // left: 100% = カード右端, - GAP/2 + CUT_ZONE_W/2 = ゾーン左端
+                    // 中心 = カード右端 + GAP/2 = gap 中央 ✓
+                    style={{
+                      left: `calc(100% - ${CUT_ZONE_W / 2 - GAP / 2}px)`,
+                      width: CUT_ZONE_W,
+                    }}
+                    onClick={(e) => { e.stopPropagation(); toggleSplitCutPoint(pageNum) }}
+                    title={
+                      isCut
+                        ? `✂ クリックで解除（p${pageNum} と p${pageNum + 1} の間）`
+                        : `p${pageNum} と p${pageNum + 1} の間で分割`
+                    }
+                  >
+                    {/* 縦線（常時表示） */}
+                    <div
+                      className="absolute inset-y-0 left-1/2 -translate-x-1/2 rounded-full transition-all duration-150"
+                      style={{
+                        width: isCut ? 4 : 1,
+                        background: isCut ? '#ef4444' : '#d1d5db',
+                        boxShadow: isCut ? '0 0 8px rgba(239,68,68,0.5)' : 'none',
+                      }}
+                    />
+
+                    {/* ハサミアイコン（中央・常時表示） */}
+                    <div
+                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center transition-all duration-150"
+                      style={{
+                        width: isCut ? 28 : 20,
+                        height: isCut ? 28 : 20,
+                        background: isCut ? '#ef4444' : '#f3f4f6',
+                        border: isCut ? 'none' : '1px solid #d1d5db',
+                        boxShadow: isCut ? '0 2px 8px rgba(239,68,68,0.4)' : '0 1px 3px rgba(0,0,0,0.1)',
+                      }}
+                    >
+                      <svg
+                        fill="none"
+                        stroke={isCut ? '#ffffff' : '#9ca3af'}
+                        viewBox="0 0 24 24"
+                        style={{ width: isCut ? 16 : 12, height: isCut ? 16 : 12 }}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       ) : (
-        /* 通常モード: グリッド表示 */
+        // ================================================================
+        // 通常モード: CSS auto-fill グリッド
+        // ================================================================
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: `repeat(auto-fill, minmax(${size}px, 1fr))`,
-            gap: 12,
+            gap: GAP,
             alignItems: 'start',
           }}
         >
