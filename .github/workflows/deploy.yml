@@ -7,6 +7,10 @@ on:
   # 手動実行も可能
   workflow_dispatch:
 
+# 2026/6/2 以降の Node.js 20 deprecation 対応: JavaScript Actions を Node.js 24 ランタイムで実行
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 # GitHub Pages へのデプロイ権限を付与
 permissions:
   contents: read
